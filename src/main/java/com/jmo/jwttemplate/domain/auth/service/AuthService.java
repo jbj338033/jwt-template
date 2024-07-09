@@ -8,7 +8,10 @@ import com.jmo.jwttemplate.global.security.jwt.dto.Jwt;
 
 public interface AuthService {
     void signup(SignUpRequest request);
+
     Jwt login(LoginRequest request);
+
     Jwt reissue(ReissueRequest request);
+
     UserResponse me();
 }

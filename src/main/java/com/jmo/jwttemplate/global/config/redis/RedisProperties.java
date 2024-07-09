@@ -1,7 +1,6 @@
 package com.jmo.jwttemplate.global.config.redis;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

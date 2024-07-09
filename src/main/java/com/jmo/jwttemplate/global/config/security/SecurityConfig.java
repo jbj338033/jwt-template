@@ -1,9 +1,9 @@
 package com.jmo.jwttemplate.global.config.security;
 
+import com.jmo.jwttemplate.global.security.jwt.filter.JwtAuthenticationFilter;
 import com.jmo.jwttemplate.global.security.jwt.filter.JwtExceptionFilter;
 import com.jmo.jwttemplate.global.security.jwt.handler.JwtAccessDeniedHandler;
 import com.jmo.jwttemplate.global.security.jwt.handler.JwtAuthenticationEntryPoint;
-import com.jmo.jwttemplate.global.security.jwt.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
