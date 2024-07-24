@@ -1,4 +1,4 @@
-package com.jmo.jwttemplate.global.security.jwt;
+package com.jmo.jwttemplate.global.security.jwt.provider;
 
 import com.jmo.jwttemplate.domain.user.domain.User;
 import com.jmo.jwttemplate.domain.user.domain.UserRole;
@@ -57,10 +57,7 @@ public class JwtProvider {
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
-        return Jwt.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        return new Jwt(accessToken, refreshToken);
     }
 
     public Authentication getAuthentication(String token) {

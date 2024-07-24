@@ -12,6 +12,7 @@ public enum CustomErrorCode {
     UNSUPPORTED_JWT_TOKEN(401, "Unsupported JWT token"),
     MALFORMED_JWT_TOKEN(401, "Malformed JWT token"),
     INVALID_TOKEN_TYPE(401, "Invalid token type"),
+    INVALID_REFRESH_TOKEN(401, "Invalid refresh token"),
 
     // AUTH
     EMAIL_DUPLICATION(400, "Email is already in use"),

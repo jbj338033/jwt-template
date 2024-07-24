@@ -1,11 +1,12 @@
 package com.jmo.jwttemplate.global.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jmo.jwttemplate.global.exception.CustomErrorCode;
+import com.jmo.jwttemplate.global.exception.CustomException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -19,23 +20,23 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
             filterChain.doFilter(request, response);
-        } catch (IllegalArgumentException e) {
-            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, e);
-        } catch (ServletException e) {
-            sendErrorResponse(response, HttpStatus.BAD_REQUEST, e);
+        } catch (CustomException e) {
+            sendErrorResponse(response, e);
         }
     }
 
-    private void sendErrorResponse(HttpServletResponse response, HttpStatus status, Throwable e) throws IOException {
-        response.setStatus(status.value());
+    private void sendErrorResponse(HttpServletResponse response, CustomException e) throws IOException {
+        CustomErrorCode code = e.getCode();
+
+        response.setStatus(code.getStatus());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
 
-        map.put("message", e.getMessage());
-        map.put("status", String.valueOf(status.value()));
+        map.put("message", code.getMessage());
+        map.put("status", code.getStatus());
 
         response.getWriter().write(mapper.writeValueAsString(map));
     }

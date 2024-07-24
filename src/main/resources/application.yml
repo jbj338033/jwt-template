@@ -17,3 +17,5 @@ jwt:
   secret-key: ${JWT_SECRET_KEY}
   access-token-expiration: 300000
   refresh-token-expiration: 86400000
+server:
+  port: 8082
