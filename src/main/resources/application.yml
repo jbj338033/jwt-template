@@ -8,10 +8,11 @@ spring:
     hibernate:
       ddl-auto: update
 
-redis:
-  host: ${REDIS_HOST}
-  port: ${REDIS_PORT}
-  password: ${REDIS_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
 
 jwt:
   secret-key: ${JWT_SECRET_KEY}
