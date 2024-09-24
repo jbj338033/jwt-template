@@ -1,7 +1,8 @@
 package com.jmo.jwttemplate.global.security.jwt.provider;
 
+import com.jmo.jwttemplate.domain.auth.repository.RefreshTokenRepository;
 import com.jmo.jwttemplate.domain.user.domain.User;
-import com.jmo.jwttemplate.domain.user.domain.UserRole;
+import com.jmo.jwttemplate.domain.user.error.UserError;
 import com.jmo.jwttemplate.domain.user.repository.UserRepository;
 import com.jmo.jwttemplate.global.error.CustomException;
 import com.jmo.jwttemplate.global.security.details.CustomUserDetails;
@@ -10,8 +11,6 @@ import com.jmo.jwttemplate.global.security.jwt.dto.Jwt;
 import com.jmo.jwttemplate.global.security.jwt.enums.JwtType;
 import com.jmo.jwttemplate.global.security.jwt.error.JwtError;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -29,45 +30,53 @@ import java.util.Date;
 public class JwtProvider {
     private final JwtProperties jwtProperties;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private SecretKey key;
 
     @PostConstruct
     protected void init() {
-        key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.getSecretKey()));
+        key = new SecretKeySpec(
+                jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8),
+                Jwts.SIG.HS512.key().build().getAlgorithm()
+        );
     }
 
-    public Jwt generateToken(String email, UserRole role) {
+    public Jwt generateToken(String email) {
         Date now = new Date();
 
         String accessToken = Jwts.builder()
-                .setHeaderParam(Header.JWT_TYPE, JwtType.ACCESS)
-                .setSubject(email)
-                .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + jwtProperties.getAccessTokenExpiration()))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .header()
+                .type(JwtType.ACCESS.name())
+                .and()
+                .subject(email)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + jwtProperties.getAccessTokenExpiration()))
+                .signWith(key)
                 .compact();
 
         String refreshToken = Jwts.builder()
-                .setHeaderParam(Header.JWT_TYPE, JwtType.REFRESH)
-                .setSubject(email)
-                .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + jwtProperties.getRefreshTokenExpiration()))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .header()
+                .type(JwtType.REFRESH.name())
+                .and()
+                .subject(email)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + jwtProperties.getRefreshTokenExpiration()))
+                .signWith(key)
                 .compact();
+
+        refreshTokenRepository.save(email, refreshToken);
 
         return new Jwt(accessToken, refreshToken);
     }
 
     public Authentication getAuthentication(String token) {
-        Jws<Claims> claims = getClaims(token);
+        Claims claims = getClaims(token);
 
         if (getType(token) != JwtType.ACCESS) {
             throw new CustomException(JwtError.INVALID_TOKEN_TYPE);
         }
 
-        User user = userRepository.findByEmail(claims.getBody().getSubject()).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        User user = userRepository.findByEmail(claims.getSubject()).orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
 
         UserDetails details = new CustomUserDetails(user);
 
@@ -85,15 +94,16 @@ public class JwtProvider {
     }
 
     public String getSubject(String token) {
-        return getClaims(token).getBody().getSubject();
+        return getClaims(token).getSubject();
     }
 
-    private Jws<Claims> getClaims(String token) {
+    private Claims getClaims(String token) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(key)
+            return Jwts.parser()
+                    .verifyWith(key)
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (ExpiredJwtException e) {
             throw new CustomException(JwtError.EXPIRED_TOKEN);
         } catch (UnsupportedJwtException e) {
@@ -106,12 +116,11 @@ public class JwtProvider {
     }
 
     public JwtType getType(String token) {
-        return JwtType.valueOf(Jwts.parserBuilder()
-                .setSigningKey(key)
+        return JwtType.valueOf(Jwts.parser()
+                .verifyWith(key)
                 .build()
-                .parseClaimsJws(token)
-                .getHeader()
-                .get(Header.JWT_TYPE).toString()
+                .parseSignedClaims(token)
+                .getHeader().getType()
         );
     }
 }

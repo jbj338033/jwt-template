@@ -7,7 +7,6 @@ import com.jmo.jwttemplate.domain.auth.error.AuthError;
 import com.jmo.jwttemplate.domain.auth.repository.RefreshTokenRepository;
 import com.jmo.jwttemplate.domain.user.domain.User;
 import com.jmo.jwttemplate.domain.user.domain.UserRole;
-import com.jmo.jwttemplate.domain.user.dto.response.UserResponse;
 import com.jmo.jwttemplate.domain.user.error.UserError;
 import com.jmo.jwttemplate.domain.user.repository.UserRepository;
 import com.jmo.jwttemplate.global.error.CustomException;
@@ -16,7 +15,6 @@ import com.jmo.jwttemplate.global.security.jwt.enums.JwtType;
 import com.jmo.jwttemplate.global.security.jwt.error.JwtError;
 import com.jmo.jwttemplate.global.security.jwt.provider.JwtProvider;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,11 +56,7 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(password, user.getPassword()))
             throw new CustomException(AuthError.WRONG_PASSWORD);
 
-        Jwt token = jwtProvider.generateToken(email, user.getRole());
-
-        refreshTokenRepository.save(email, token.refreshToken());
-
-        return token;
+        return jwtProvider.generateToken(email);
     }
 
     @Override
@@ -80,29 +74,8 @@ public class AuthServiceImpl implements AuthService {
         if (!refreshTokenRepository.findByEmail(email).equals(refreshToken))
             throw new CustomException(JwtError.INVALID_REFRESH_TOKEN);
 
+        if (!userRepository.existsByEmail(email)) throw new CustomException(UserError.USER_NOT_FOUND);
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
-
-        Jwt token = jwtProvider.generateToken(email, user.getRole());
-
-        refreshTokenRepository.save(email, token.refreshToken());
-
-        return token;
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public UserResponse me() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
-
-        return new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getRole()
-        );
+        return jwtProvider.generateToken(email);
     }
 }
