@@ -1,9 +1,9 @@
-package com.jmo.jwttemplate.global.security;
+package com.jmo.jwttemplate.global.security.details;
 
 import com.jmo.jwttemplate.domain.user.domain.User;
+import com.jmo.jwttemplate.domain.user.error.UserError;
 import com.jmo.jwttemplate.domain.user.repository.UserRepository;
-import com.jmo.jwttemplate.global.exception.CustomErrorCode;
-import com.jmo.jwttemplate.global.exception.CustomException;
+import com.jmo.jwttemplate.global.error.CustomException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,7 +18,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new CustomException(CustomErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
 
         return new CustomUserDetails(user);
     }

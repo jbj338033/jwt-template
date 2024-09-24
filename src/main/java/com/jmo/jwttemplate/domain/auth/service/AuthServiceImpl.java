@@ -3,15 +3,17 @@ package com.jmo.jwttemplate.domain.auth.service;
 import com.jmo.jwttemplate.domain.auth.dto.request.LoginRequest;
 import com.jmo.jwttemplate.domain.auth.dto.request.ReissueRequest;
 import com.jmo.jwttemplate.domain.auth.dto.request.SignUpRequest;
+import com.jmo.jwttemplate.domain.auth.error.AuthError;
 import com.jmo.jwttemplate.domain.auth.repository.RefreshTokenRepository;
 import com.jmo.jwttemplate.domain.user.domain.User;
 import com.jmo.jwttemplate.domain.user.domain.UserRole;
 import com.jmo.jwttemplate.domain.user.dto.response.UserResponse;
+import com.jmo.jwttemplate.domain.user.error.UserError;
 import com.jmo.jwttemplate.domain.user.repository.UserRepository;
-import com.jmo.jwttemplate.global.exception.CustomErrorCode;
-import com.jmo.jwttemplate.global.exception.CustomException;
+import com.jmo.jwttemplate.global.error.CustomException;
 import com.jmo.jwttemplate.global.security.jwt.dto.Jwt;
 import com.jmo.jwttemplate.global.security.jwt.enums.JwtType;
+import com.jmo.jwttemplate.global.security.jwt.error.JwtError;
 import com.jmo.jwttemplate.global.security.jwt.provider.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
         String email = request.email();
         String password = request.password();
 
-        if (userRepository.existsByEmail(email)) throw new CustomException(CustomErrorCode.EMAIL_DUPLICATION);
+        if (userRepository.existsByEmail(email)) throw new CustomException(UserError.EMAIL_DUPLICATION);
 
         User user = User.builder()
                 .email(email)
@@ -51,10 +53,10 @@ public class AuthServiceImpl implements AuthService {
         String password = request.password();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(CustomErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
 
         if (!passwordEncoder.matches(password, user.getPassword()))
-            throw new CustomException(CustomErrorCode.WRONG_PASSWORD);
+            throw new CustomException(AuthError.WRONG_PASSWORD);
 
         Jwt token = jwtProvider.generateToken(email, user.getRole());
 
@@ -68,19 +70,19 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = request.refreshToken();
 
         if (jwtProvider.getType(refreshToken) != JwtType.REFRESH)
-            throw new CustomException(CustomErrorCode.INVALID_TOKEN_TYPE);
+            throw new CustomException(JwtError.INVALID_TOKEN_TYPE);
 
         String email = jwtProvider.getSubject(refreshToken);
 
         if (!refreshTokenRepository.existsByEmail(email))
-            throw new CustomException(CustomErrorCode.INVALID_REFRESH_TOKEN);
+            throw new CustomException(JwtError.INVALID_REFRESH_TOKEN);
 
         if (!refreshTokenRepository.findByEmail(email).equals(refreshToken))
-            throw new CustomException(CustomErrorCode.INVALID_REFRESH_TOKEN);
+            throw new CustomException(JwtError.INVALID_REFRESH_TOKEN);
 
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(CustomErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
 
         Jwt token = jwtProvider.generateToken(email, user.getRole());
 
@@ -95,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException(CustomErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(UserError.USER_NOT_FOUND));
 
         return new UserResponse(
                 user.getId(),

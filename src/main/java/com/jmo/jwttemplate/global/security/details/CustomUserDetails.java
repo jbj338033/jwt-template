@@ -1,4 +1,4 @@
-package com.jmo.jwttemplate.global.security;
+package com.jmo.jwttemplate.global.security.details;
 
 import com.jmo.jwttemplate.domain.user.domain.User;
 import lombok.Getter;

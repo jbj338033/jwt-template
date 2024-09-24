@@ -3,12 +3,12 @@ package com.jmo.jwttemplate.global.security.jwt.provider;
 import com.jmo.jwttemplate.domain.user.domain.User;
 import com.jmo.jwttemplate.domain.user.domain.UserRole;
 import com.jmo.jwttemplate.domain.user.repository.UserRepository;
-import com.jmo.jwttemplate.global.exception.CustomErrorCode;
-import com.jmo.jwttemplate.global.exception.CustomException;
-import com.jmo.jwttemplate.global.security.CustomUserDetails;
+import com.jmo.jwttemplate.global.error.CustomException;
+import com.jmo.jwttemplate.global.security.details.CustomUserDetails;
 import com.jmo.jwttemplate.global.security.jwt.config.JwtProperties;
 import com.jmo.jwttemplate.global.security.jwt.dto.Jwt;
 import com.jmo.jwttemplate.global.security.jwt.enums.JwtType;
+import com.jmo.jwttemplate.global.security.jwt.error.JwtError;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -64,7 +64,7 @@ public class JwtProvider {
         Jws<Claims> claims = getClaims(token);
 
         if (getType(token) != JwtType.ACCESS) {
-            throw new CustomException(CustomErrorCode.INVALID_TOKEN_TYPE);
+            throw new CustomException(JwtError.INVALID_TOKEN_TYPE);
         }
 
         User user = userRepository.findByEmail(claims.getBody().getSubject()).orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -95,13 +95,13 @@ public class JwtProvider {
                     .build()
                     .parseClaimsJws(token);
         } catch (ExpiredJwtException e) {
-            throw new CustomException(CustomErrorCode.EXPIRED_JWT_TOKEN);
+            throw new CustomException(JwtError.EXPIRED_TOKEN);
         } catch (UnsupportedJwtException e) {
-            throw new CustomException(CustomErrorCode.UNSUPPORTED_JWT_TOKEN);
+            throw new CustomException(JwtError.UNSUPPORTED_TOKEN);
         } catch (MalformedJwtException e) {
-            throw new CustomException(CustomErrorCode.MALFORMED_JWT_TOKEN);
+            throw new CustomException(JwtError.MALFORMED_TOKEN);
         } catch (IllegalArgumentException e) {
-            throw new CustomException(CustomErrorCode.INVALID_JWT_TOKEN);
+            throw new CustomException(JwtError.INVALID_TOKEN);
         }
     }
 

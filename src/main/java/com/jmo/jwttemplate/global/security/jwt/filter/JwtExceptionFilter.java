@@ -1,8 +1,8 @@
 package com.jmo.jwttemplate.global.security.jwt.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jmo.jwttemplate.global.exception.CustomErrorCode;
-import com.jmo.jwttemplate.global.exception.CustomException;
+import com.jmo.jwttemplate.global.error.CustomError;
+import com.jmo.jwttemplate.global.error.CustomException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,17 +26,17 @@ public class JwtExceptionFilter extends OncePerRequestFilter {
     }
 
     private void sendErrorResponse(HttpServletResponse response, CustomException e) throws IOException {
-        CustomErrorCode code = e.getCode();
+        CustomError error = e.getError();
 
-        response.setStatus(code.getStatus());
+        response.setStatus(error.getStatus());
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> map = new HashMap<>();
 
-        map.put("message", code.getMessage());
-        map.put("status", code.getStatus());
+        map.put("message", error.getMessage());
+        map.put("status", error.getStatus());
 
         response.getWriter().write(mapper.writeValueAsString(map));
     }

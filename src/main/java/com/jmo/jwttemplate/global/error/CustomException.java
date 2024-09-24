@@ -1,4 +1,4 @@
-package com.jmo.jwttemplate.global.exception;
+package com.jmo.jwttemplate.global.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -6,5 +6,5 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public class CustomException extends RuntimeException {
-    private final CustomErrorCode code;
+    private final CustomError error;
 }
